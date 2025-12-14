@@ -5,11 +5,6 @@ Guía completa para probar el Sistema Ticketero con notificaciones automáticas 
 ## 📋 Prerrequisitos
 
 ```bash
-# 1. Compilar el p# Sistema Ticketero - Guía Completa de APIs
-
-## 🚀 Inicio Rápido
-
-```bash
 # 1. Compilar el proyecto
 mvnw.cmd clean compile
 
@@ -31,6 +26,26 @@ curl http://localhost:8080/actuator/health
 - **Chat ID**: 6527632523
 - **Estado**: ✅ ACTIVO - Envía notificaciones reales
 
+## 🌐 Demo Web Interface
+
+### Interfaz Web para Generar Tickets
+```
+URL: file:///[ruta-proyecto]/demo-ticketero-web/index.html
+```
+
+**Características:**
+- ✅ Formulario intuitivo con validaciones
+- ✅ Integración directa con API REST
+- ✅ Pop-ups de éxito y error
+- ✅ Diseño responsive y moderno
+- ✅ Manejo de errores detallado
+
+**Campos del formulario:**
+- **RUT/ID Nacional**: Identificación del cliente (requerido)
+- **Nombre Completo**: Nombre del cliente (requerido)
+- **Teléfono**: Para notificaciones Telegram (opcional)
+- **Tipo de Atención**: CAJA, PERSONAL_BANKER, EMPRESAS, GERENCIA (requerido)
+
 ---
 
 ## 🔗 APIs Disponibles
@@ -51,7 +66,81 @@ curl -X POST "http://localhost:8080/api/telegram/test?message=Hola desde el sist
 
 ---
 
-### **1. Asesores (Advisors)**
+### **1. Tickets**
+
+#### Crear Ticket
+```bash
+curl -X POST http://localhost:8080/api/tickets \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nationalId": "12345678-9",
+    "nombreCliente": "Ana Rodríguez",
+    "telefono": "+56912345678",
+    "queueType": "CAJA"
+  }'
+```
+
+**Respuesta esperada:**
+```json
+{
+  "id": 1,
+  "codigoReferencia": "TK-A1B2C3D4",
+  "numero": "C001",
+  "nationalId": "12345678-9",
+  "nombreCliente": "Ana Rodríguez",
+  "telefono": "+56912345678",
+  "branchOffice": "Sucursal Principal",
+  "queueType": "CAJA",
+  "status": "EN_ESPERA",
+  "positionInQueue": 1,
+  "estimatedWaitMinutes": 5,
+  "assignedAdvisorName": null,
+  "assignedModuleNumber": null,
+  "createdAt": "2024-12-14T15:30:00"
+}
+```
+
+**📱 NOTIFICACIÓN AUTOMÁTICA:** Se programa mensaje de confirmación para envío en 5 segundos:
+```
+🎫 Ticket Creado
+
+Código: TK-A1B2C3D4
+Número: C001
+Cliente: Ana Rodríguez
+Posición en cola: 1
+Tiempo estimado: 5 minutos
+
+⏰ Te notificaremos cuando sea tu turno.
+```
+
+#### Consultar Ticket por Código
+```bash
+curl -X GET http://localhost:8080/api/tickets/TK-A1B2C3D4
+```
+
+**Respuesta esperada:**
+```json
+{
+  "id": 1,
+  "codigoReferencia": "TK-A1B2C3D4",
+  "numero": "C001",
+  "nationalId": "12345678-9",
+  "nombreCliente": "Ana Rodríguez",
+  "telefono": "+56912345678",
+  "branchOffice": "Sucursal Principal",
+  "queueType": "CAJA",
+  "status": "EN_ESPERA",
+  "positionInQueue": 1,
+  "estimatedWaitMinutes": 5,
+  "assignedAdvisorName": null,
+  "assignedModuleNumber": null,
+  "createdAt": "2024-12-14T15:30:00"
+}
+```
+
+---
+
+### **2. Asesores (Advisors)**
 
 > **📊 Datos Iniciales**: El sistema carga automáticamente 5 asesores al iniciar:
 > - María González (Módulo 1)
@@ -97,31 +186,9 @@ curl -X POST http://localhost:8080/api/advisors \
   }'
 ```
 
-**Respuesta esperada:**
-```json
-{
-  "id": 6,
-  "name": "Luis Martínez",
-  "email": "luis.martinez@institucion.cl",
-  "status": "AVAILABLE",
-  "moduleNumber": 6,
-  "assignedTicketsCount": 0
-}
-```
-
 #### Asignar Próximo Ticket (Manual)
 ```bash
 curl -X POST http://localhost:8080/api/advisors/assign-next
-```
-
-**Respuesta esperada:**
-```json
-{
-  "message": "Ticket asignado exitosamente",
-  "ticketId": 1,
-  "advisorName": "María González",
-  "moduleNumber": 1
-}
 ```
 
 **📱 NOTIFICACIÓN AUTOMÁTICA:** Se envía mensaje "Es tu turno" al cliente vía Telegram.
@@ -129,107 +196,6 @@ curl -X POST http://localhost:8080/api/advisors/assign-next
 #### Completar Atención
 ```bash
 curl -X POST http://localhost:8080/api/advisors/complete/1
-```
-
-**Respuesta esperada:**
-```json
-{
-  "message": "Ticket completado exitosamente",
-  "ticketId": 1,
-  "advisorName": "María González"
-}
-```
-
----
-
-### **2. Tickets**
-
-#### Crear Ticket
-```bash
-curl -X POST http://localhost:8080/api/tickets \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nationalId": "12345678",
-    "nombreCliente": "Ana Rodríguez",
-    "telefono": "+56912345678"
-  }'
-```
-
-**Respuesta esperada:**
-```json
-{
-  "id": 1,
-  "codigoReferencia": "TK-A1B2C3D4",
-  "numero": "C001",
-  "nationalId": "12345678",
-  "nombreCliente": "Ana Rodríguez",
-  "telefono": "+56912345678",
-  "branchOffice": "Sucursal Principal",
-  "queueType": "CAJA",
-  "status": "EN_ESPERA",
-  "positionInQueue": 1,
-  "estimatedWaitMinutes": 5,
-  "assignedAdvisorName": null,
-  "assignedModuleNumber": null,
-  "createdAt": "2024-12-14T15:30:00"
-}
-```
-
-**📱 NOTIFICACIÓN AUTOMÁTICA:** Se programa mensaje de confirmación para envío en 5 segundos:
-```
-🎫 Ticket Creado
-
-Código: TK-A1B2C3D4
-Número: C001
-Cliente: Ana Rodríguez
-Posición en cola: 1
-Tiempo estimado: 5 minutos
-
-⏰ Te notificaremos cuando sea tu turno.
-```
-
-#### Consultar Ticket por Código
-```bash
-curl -X GET http://localhost:8080/api/tickets/TK-A1B2C3D4
-```
-
-**Respuesta esperada:**
-```json
-{
-  "id": 1,
-  "codigoReferencia": "TK-A1B2C3D4",
-  "numero": "C001",
-  "nationalId": "12345678",
-  "nombreCliente": "Ana Rodríguez",
-  "telefono": "+56912345678",
-  "branchOffice": "Sucursal Principal",
-  "queueType": "CAJA",
-  "status": "EN_ESPERA",
-  "positionInQueue": 1,
-  "estimatedWaitMinutes": 5,
-  "assignedAdvisorName": null,
-  "assignedModuleNumber": null,
-  "createdAt": "2024-12-14T15:30:00"
-}
-```
-
-#### Listar Tickets Activos
-```bash
-curl -X GET http://localhost:8080/api/tickets
-```
-
-**Respuesta esperada:**
-```json
-[
-  {
-    "id": 1,
-    "codigoReferencia": "TK-A1B2C3D4",
-    "numero": "C001",
-    "nombreCliente": "Ana Rodríguez",
-    "status": "EN_ESPERA",
-    "positionInQueue": 1
-  }
-]
 ```
 
 ---
@@ -274,25 +240,6 @@ curl -X GET http://localhost:8080/api/queue/status
 curl -X GET http://localhost:8080/actuator/health
 ```
 
-**Respuesta esperada:**
-```json
-{
-  "status": "UP",
-  "components": {
-    "db": {
-      "status": "UP",
-      "details": {
-        "database": "H2",
-        "validationQuery": "isValid()"
-      }
-    },
-    "diskSpace": {
-      "status": "UP"
-    }
-  }
-}
-```
-
 #### Métricas del Sistema
 ```bash
 curl -X GET http://localhost:8080/actuator/metrics
@@ -307,7 +254,27 @@ curl -X GET http://localhost:8080/actuator/info
 
 ## 🚀 Flujos Completos de Prueba
 
-### **Escenario 1: Prueba de Telegram**
+### **Escenario 1: Prueba con Interfaz Web**
+
+```bash
+# PASO 1: Abrir la interfaz web
+# Navegar a: file:///[ruta-proyecto]/demo-ticketero-web/index.html
+
+# PASO 2: Completar formulario
+# - RUT/ID: 12345678-9
+# - Nombre: Ana Rodríguez
+# - Teléfono: +56912345678 (opcional)
+# - Tipo: CAJA
+
+# PASO 3: Hacer clic en "Generar Ticket"
+# - Si es exitoso: Pop-up con detalles del ticket
+# - Si hay error: Pop-up con mensaje de error detallado
+
+# PASO 4: Verificar notificación Telegram (si se proporcionó teléfono)
+# 📱 Recibirás mensaje de confirmación en 5 segundos
+```
+
+### **Escenario 2: Prueba de Telegram**
 
 ```bash
 # PASO 1: Probar conexión con Telegram
@@ -316,7 +283,7 @@ curl -X POST "http://localhost:8080/api/telegram/test?message=Sistema iniciado c
 echo "\n📱 Deberías recibir un mensaje en Telegram"
 ```
 
-### **Escenario 2: Flujo Básico con Notificaciones Reales**
+### **Escenario 3: Flujo Básico con Notificaciones Reales**
 
 ```bash
 # PASO 1: Verificar asesores iniciales (5 pre-cargados)
@@ -325,17 +292,17 @@ curl -s http://localhost:8080/api/advisors | jq .
 
 # PASO 2: Crear tickets (con notificaciones REALES vía Telegram)
 echo "\n=== PASO 2: Crear tickets ==="
-curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "12345678", "nombreCliente": "Ana Rodríguez", "telefono": "+56912345678"}'
+curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "12345678-9", "nombreCliente": "Ana Rodríguez", "telefono": "+56912345678", "queueType": "CAJA"}'
 echo "\n📱 NOTIFICACIÓN REAL: Mensaje programado para Telegram (5 segundos)"
 
 sleep 2
 
-curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "87654321", "nombreCliente": "Pedro Martínez", "telefono": "+56987654321"}'
+curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "87654321-0", "nombreCliente": "Pedro Martínez", "telefono": "+56987654321", "queueType": "PERSONAL_BANKER"}'
 echo "\n📱 NOTIFICACIÓN REAL: Mensaje programado para Telegram (5 segundos)"
 
 sleep 2
 
-curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "11223344", "nombreCliente": "Laura Sánchez", "telefono": "+56911223344"}'
+curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "11223344-5", "nombreCliente": "Laura Sánchez", "telefono": "+56911223344", "queueType": "EMPRESAS"}'
 echo "\n📱 NOTIFICACIÓN REAL: Mensaje programado para Telegram (5 segundos)"
 
 # PASO 3: Ver estado de cola
@@ -367,319 +334,158 @@ curl -s http://localhost:8080/api/queue/status | jq .
 curl -s http://localhost:8080/api/advisors | jq .
 ```
 
-### **Escenario 3: Consulta de Tickets**
+### **Escenario 4: Consulta de Tickets**
 
 ```bash
 # Crear un ticket y consultar por código
-RESPONSE=$(curl -s -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "99887766", "nombreCliente": "Carlos Silva"}')
+RESPONSE=$(curl -s -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "99887766-7", "nombreCliente": "Carlos Silva", "queueType": "GERENCIA"}')
 CODIGO=$(echo $RESPONSE | jq -r '.codigoReferencia')
 echo "Ticket creado: $CODIGO"
-echo "📱 Recibirás notificación de confirmación en Telegram"
+echo "📱 Recibirás notificación de confirmación en Telegram (si proporcionaste teléfono)"
 
 # Consultar el ticket
 curl -s http://localhost:8080/api/tickets/$CODIGO | jq .
 ```
 
-### **Escenario 4: Flujo Manual de Asignación**
+### **Escenario 5: Flujo Manual de Asignación**
 
 ```bash
 # PASO 1: Crear ticket
 echo "=== PASO 1: Crear ticket ==="
-curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "55443322", "nombreCliente": "María Fernández", "telefono": "+56955443322"}'
+curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "55443322-1", "nombreCliente": "María Fernández", "telefono": "+56955443322", "queueType": "CAJA"}'
 
-# PASO 2: Ver estado antes de asignación
-echo "\n=== PASO 2: Estado antes de asignación ==="
-curl -s http://localhost:8080/api/queue/status | jq .
-
-# PASO 3: Asignar manualmente
-echo "\n=== PASO 3: Asignación manual ==="
+# PASO 2: Asignar manualmente
+echo "\n=== PASO 2: Asignar manualmente ==="
 curl -X POST http://localhost:8080/api/advisors/assign-next
-echo "\n📱 Cliente recibe notificación 'Es tu turno' en Telegram"
 
-# PASO 4: Ver estado después de asignación
-echo "\n=== PASO 4: Estado después de asignación ==="
-curl -s http://localhost:8080/api/queue/status | jq .
+# PASO 3: Verificar asignación
+echo "\n=== PASO 3: Verificar asignación ==="
 curl -s http://localhost:8080/api/advisors | jq .
 ```
 
 ---
 
-## 🚨 Casos de Error y Validaciones
+## 🎯 Casos de Prueba Específicos
 
-### **Validaciones de Negocio**
-
+### **Caso 1: Error - Cliente ya tiene ticket activo**
 ```bash
-# 1. Ticket duplicado (mismo nationalId)
-echo "=== Error: Ticket duplicado ==="
-curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "12345678", "nombreCliente": "Otro Cliente"}'
-# Respuesta: 400 Bad Request
-# {
-#   "error": "Bad Request",
-#   "message": "Ya existe un ticket activo para este National ID"
-# }
+# Crear primer ticket
+curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "12345678-9", "nombreCliente": "Ana Rodríguez", "queueType": "CAJA"}'
 
-# 2. Ticket no encontrado
-echo "\n=== Error: Ticket no encontrado ==="
-curl -X GET http://localhost:8080/api/tickets/TK-NOEXISTE
-# Respuesta: 404 Not Found
-# {
-#   "error": "Not Found",
-#   "message": "Ticket no encontrado"
-# }
+# Intentar crear segundo ticket con mismo RUT (debería fallar)
+curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "12345678-9", "nombreCliente": "Ana Rodríguez", "queueType": "PERSONAL_BANKER"}'
 
-# 3. Completar ticket inexistente
-echo "\n=== Error: Completar ticket inexistente ==="
-curl -X POST http://localhost:8080/api/advisors/complete/999
-# Respuesta: 400 Bad Request
-# {
-#   "error": "Bad Request",
-#   "message": "Ticket no encontrado"
-# }
-
-# 4. Asesor duplicado (mismo email)
-echo "\n=== Error: Asesor duplicado ==="
-curl -X POST http://localhost:8080/api/advisors -H "Content-Type: application/json" -d '{"nombre": "Otro Juan", "email": "maria.gonzalez@institucion.cl"}'
-# Respuesta: 400 Bad Request
-# {
-#   "error": "Bad Request",
-#   "message": "Ya existe un asesor con este email"
-# }
+# Respuesta esperada: HTTP 409 Conflict
 ```
 
-### **Validaciones de Entrada**
-
+### **Caso 2: Validación de datos**
 ```bash
-# 1. Campos requeridos faltantes
-echo "=== Error: Campos faltantes ==="
-curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": ""}'
-# Respuesta: 400 Bad Request con detalles de validación
-# {
-#   "error": "Validation Failed",
-#   "details": [
-#     "nationalId: no debe estar vacío",
-#     "nombreCliente: no debe estar vacío"
-#   ]
-# }
+# Datos inválidos (sin RUT)
+curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nombreCliente": "Ana Rodríguez", "queueType": "CAJA"}'
 
-# 2. Email inválido
-echo "\n=== Error: Email inválido ==="
-curl -X POST http://localhost:8080/api/advisors -H "Content-Type: application/json" -d '{"nombre": "Test", "email": "email-invalido"}'
-# Respuesta: 400 Bad Request
-# {
-#   "error": "Validation Failed",
-#   "details": ["email: debe ser una dirección de correo electrónico válida"]
-# }
+# Respuesta esperada: HTTP 400 Bad Request
 ```
 
----
+### **Caso 3: Ticket sin teléfono (sin notificaciones)**
+```bash
+# Crear ticket sin teléfono
+curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "99887766-7", "nombreCliente": "Carlos Silva", "queueType": "GERENCIA"}'
 
-## 🔍 Base de Datos H2
-
-- **URL:** http://localhost:8080/h2-console
-- **JDBC URL:** jdbc:h2:mem:ticketero
-- **Usuario:** sa
-- **Contraseña:** (vacía)
-
-### **Consultas Útiles**
-
-```sql
--- Ver todos los tickets
-SELECT * FROM ticket ORDER BY created_at;
-
--- Ver asesores y su estado
-SELECT name, status, module_number, assigned_tickets_count FROM advisor;
-
--- Ver mensajes programados
-SELECT t.numero, m.plantilla, m.estado_envio, m.fecha_programada 
-FROM mensaje m 
-JOIN ticket t ON m.ticket_id = t.id 
-ORDER BY m.fecha_programada;
-
--- Estadísticas de cola
-SELECT status, COUNT(*) as cantidad 
-FROM ticket 
-GROUP BY status;
+# No se enviarán notificaciones Telegram
 ```
-
----
-
-## 🤖 Automatización del Sistema
-
-### **Schedulers Activos**
-
-1. **MessageScheduler** (cada 60 segundos)
-   - Procesa mensajes pendientes de Telegram
-   - Reintenta envíos fallidos (máximo 3 intentos)
-   - Log: `🔄 Processing pending messages...`
-
-2. **QueueProcessorScheduler** (cada 5 segundos)
-   - Asigna automáticamente tickets a asesores disponibles
-   - Envía notificación "Es tu turno" al cliente
-   - Log: `🎯 Processing queue for automatic assignment...`
-
-### **Flujo de Notificaciones Telegram 📱**
-
-1. **Ticket Creado** → Mensaje programado (+5 segundos)
-   ```
-   🎫 Ticket Creado
-   
-   Código: TK-A1B2C3D4
-   Número: C001
-   Cliente: Ana Rodríguez
-   Posición en cola: 1
-   Tiempo estimado: 5 minutos
-   
-   ⏰ Te notificaremos cuando sea tu turno.
-   ```
-
-2. **Ticket Asignado** → Mensaje "Es tu turno" (+2 segundos)
-   ```
-   🔔 ¡ES TU TURNO!
-   
-   Número: C001
-   Cliente: Ana Rodríguez
-   Módulo: 1
-   Asesor: María González
-   
-   🏃‍♀️ Dirígete al módulo ahora.
-   ```
-
-3. **Próximo Turno** → Mensaje de preparación
-   ```
-   ⏰ ERES EL PRÓXIMO
-   
-   Número: C002
-   Cliente: Pedro Martínez
-   Posición: 1
-   
-   💼 Prepárate, serás llamado pronto.
-   ```
-
-4. **MessageScheduler** → Procesa y envía mensajes REALES vía Telegram API
 
 ---
 
 ## 📊 Estados del Sistema
 
-### **Estados de Tickets**
-- `EN_ESPERA`: Esperando asignación
-- `PROXIMO`: Próximo a ser atendido (posición ≤ 3)
-- `ATENDIENDO`: Siendo atendido por un asesor
-- `COMPLETADO`: Atención finalizada
-- `CANCELADO`: Cancelado por cliente o sistema
-- `NO_ATENDIDO`: Cliente no se presentó
+### **Estados de Ticket**
+- `EN_ESPERA` - Esperando asignación
+- `PROXIMO` - Próximo a ser atendido (posición <= 3)
+- `ATENDIENDO` - Siendo atendido por un asesor
+- `COMPLETADO` - Atención finalizada
+- `CANCELADO` - Cancelado
+- `NO_ATENDIDO` - Cliente no se presentó
 
-### **Estados de Asesores**
-- `AVAILABLE`: Disponible para atender
-- `BUSY`: Atendiendo un cliente
-- `OFFLINE`: No disponible
+### **Estados de Asesor**
+- `AVAILABLE` - Disponible para atender
+- `BUSY` - Atendiendo un cliente
+- `OFFLINE` - No disponible
 
-### **Estados de Mensajes**
-- `PENDIENTE`: Esperando ser enviado
-- `ENVIADO`: Enviado exitosamente
-- `FALLIDO`: Falló el envío (después de 3 intentos)
-
----
-
-## 🎯 Características Implementadas
-
-✅ **RF-001**: Creación de tickets con código único  
-✅ **RF-002**: Consulta de tickets por código  
-✅ **RF-003**: Gestión de cola automática  
-✅ **RF-004**: Asignación automática a asesores  
-✅ **RF-005**: Notificaciones programadas vía Telegram  
-✅ **RF-006**: Estado de cola en tiempo real  
-✅ **RF-007**: Gestión de asesores  
-✅ **RF-008**: Completar atención de tickets  
+### **Tipos de Cola**
+- `CAJA` - Transacciones básicas (5 min promedio)
+- `PERSONAL_BANKER` - Productos financieros (15 min promedio)
+- `EMPRESAS` - Clientes corporativos (20 min promedio)
+- `GERENCIA` - Casos especiales (30 min promedio)
 
 ---
 
-## 🧪 Pruebas Completas del Sistema
+## 🔧 Troubleshooting
 
-### **Test 1: Verificación de Telegram**
-```bash
-# Probar que Telegram funciona
-curl -X POST "http://localhost:8080/api/telegram/test?message=Sistema funcionando correctamente"
-# Resultado esperado: Mensaje en tu Telegram
+### **Problema: Error de conexión en interfaz web**
+```
+Error: No se pudo conectar con el servidor
+Solución: Verificar que la aplicación esté ejecutándose en http://localhost:8080
 ```
 
-### **Test 2: Flujo Completo End-to-End**
-```bash
-#!/bin/bash
-echo "🚀 INICIANDO PRUEBA COMPLETA DEL SISTEMA"
-
-# 1. Health Check
-echo "\n1. 🔍 Health Check"
-curl -s http://localhost:8080/actuator/health | jq .status
-
-# 2. Verificar asesores
-echo "\n2. 👥 Asesores disponibles"
-curl -s http://localhost:8080/api/advisors | jq 'length'
-
-# 3. Crear ticket con notificación
-echo "\n3. 🎫 Creando ticket..."
-RESPONSE=$(curl -s -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "12345678", "nombreCliente": "Test User", "telefono": "+56912345678"}')
-TICKET_ID=$(echo $RESPONSE | jq -r '.id')
-CODIGO=$(echo $RESPONSE | jq -r '.codigoReferencia')
-echo "Ticket creado: $CODIGO (ID: $TICKET_ID)"
-echo "📱 Revisa tu Telegram - deberías recibir notificación"
-
-# 4. Esperar y asignar
-echo "\n4. ⏰ Esperando 10 segundos para asignación automática..."
-sleep 10
-
-# 5. Verificar asignación
-echo "\n5. 🔄 Verificando asignación"
-curl -s http://localhost:8080/api/tickets/$CODIGO | jq '.status, .assignedAdvisorName, .assignedModuleNumber'
-echo "📱 Si fue asignado, deberías recibir notificación 'Es tu turno'"
-
-# 6. Completar ticket
-echo "\n6. ✅ Completando ticket"
-curl -s -X POST http://localhost:8080/api/advisors/complete/$TICKET_ID
-
-# 7. Estado final
-echo "\n7. 📊 Estado final"
-curl -s http://localhost:8080/api/queue/status | jq '.totalTicketsInQueue, .availableAdvisors'
-
-echo "\n✅ PRUEBA COMPLETA FINALIZADA"
+### **Problema: No llegan notificaciones Telegram**
+```
+Verificar:
+1. Token del bot configurado correctamente
+2. Chat ID válido
+3. Campo telefono proporcionado en el ticket
+4. Revisar logs de la aplicación
 ```
 
-### **Test 3: Carga de Múltiples Tickets**
-```bash
-# Crear múltiples tickets para probar la cola
-for i in {1..5}; do
-  curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d "{\"nationalId\": \"1234567$i\", \"nombreCliente\": \"Cliente $i\", \"telefono\": \"+5691234567$i\"}"
-  echo "\nTicket $i creado - 📱 Notificación enviada"
-  sleep 1
-done
+### **Problema: H2 Console no carga**
+```
+URL: http://localhost:8080/h2-console
+JDBC URL: jdbc:h2:mem:ticketero
+Usuario: sa
+Contraseña: (vacía)
+```
 
-echo "\n📊 Estado de la cola:"
-curl -s http://localhost:8080/api/queue/status | jq .
+### **Problema: Tickets no se asignan automáticamente**
+```
+Verificar:
+1. Hay asesores con status AVAILABLE
+2. QueueProcessorScheduler está ejecutándose (cada 5s)
+3. Revisar logs para errores
 ```
 
 ---
 
-## 🚀 Próximos Pasos
+## 📁 Estructura de Archivos
 
-### **✅ Completado**
-- ✅ Telegram Bot configurado y funcionando
-- ✅ Notificaciones reales vía Telegram
-- ✅ Sistema de cola automático
-- ✅ API REST completa
-- ✅ Base de datos H2 funcional
+```
+proyectoTicket/
+├── demo-ticketero-web/
+│   └── index.html              # Interfaz web para generar tickets
+├── src/main/java/
+│   └── com/example/ticketero/
+│       ├── controller/         # Controladores REST
+│       ├── service/           # Lógica de negocio
+│       ├── repository/        # Acceso a datos
+│       ├── model/            # Entidades y DTOs
+│       └── scheduler/        # Tareas programadas
+├── docs/                     # Documentación
+├── PASO-A-PASO.md           # Esta guía
+└── README.md                # Información general
+```
 
-### **🔄 Mejoras Futuras**
-1. **UI Web**
-   - Dashboard para asesores
-   - Pantalla de cola para clientes
-   - Métricas en tiempo real
+---
 
-2. **Escalabilidad**
-   - Migrar a PostgreSQL
-   - Implementar Redis para cache
-   - Microservicios con Spring Cloud
+## 🎉 ¡Listo para Probar!
 
-3. **Funcionalidades Avanzadas**
-   - Webhook de Telegram para respuestas
-   - Notificaciones por SMS
-   - Integración con sistemas externos
+1. **Ejecutar aplicación**: `mvnw.cmd spring-boot:run`
+2. **Abrir interfaz web**: `demo-ticketero-web/index.html`
+3. **Generar tickets** usando el formulario web
+4. **Verificar notificaciones** en Telegram
+5. **Monitorear estado** con las APIs REST
+
+**¡El sistema está completamente funcional y listo para demostración!**
+
+---
+
+**Versión:** 1.0  
+**Última actualización:** Diciembre 2024  
+**Estado:** ✅ COMPLETADO

@@ -17,6 +17,7 @@ import java.util.Optional;
 @RequestMapping("/api/advisors")
 @RequiredArgsConstructor
 @Slf4j
+@CrossOrigin(origins = "*")
 public class AdvisorController {
     
     private final AdvisorService advisorService;

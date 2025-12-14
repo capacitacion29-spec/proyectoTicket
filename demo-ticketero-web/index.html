@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Ticketero - Generar Ticket</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header.success {
+            color: #28a745;
+        }
+
+        .modal-header.error {
+            color: #dc3545;
+        }
+
+        .modal-header h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .ticket-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .ticket-info h3 {
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .close-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: #5a6268;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-icon {
+            font-size: 48px;
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+
+        .error-icon {
+            font-size: 48px;
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎫 Sistema Ticketero</h1>
+            <p>Genera tu ticket para ser atendido</p>
+        </div>
+
+        <form id="ticketForm">
+            <div class="form-group">
+                <label for="nationalId">RUT/ID Nacional *</label>
+                <input type="text" id="nationalId" name="nationalId" placeholder="Ej: 12345678-9" required>
+            </div>
+
+            <div class="form-group">
+                <label for="nombreCliente">Nombre Completo *</label>
+                <input type="text" id="nombreCliente" name="nombreCliente" placeholder="Ej: Juan Pérez González" required>
+            </div>
+
+            <div class="form-group">
+                <label for="telefono">Teléfono (opcional)</label>
+                <input type="tel" id="telefono" name="telefono" placeholder="Ej: +56912345678">
+                <small style="color: #666; font-size: 14px;">Si proporcionas tu teléfono, recibirás notificaciones por Telegram</small>
+            </div>
+
+            <div class="form-group">
+                <label for="queueType">Tipo de Atención *</label>
+                <select id="queueType" name="queueType" required>
+                    <option value="">Selecciona el tipo de atención</option>
+                    <option value="CAJA">Caja (Transacciones básicas)</option>
+                    <option value="PERSONAL_BANKER">Personal Banker (Productos financieros)</option>
+                    <option value="EMPRESAS">Empresas (Clientes corporativos)</option>
+                    <option value="GERENCIA">Gerencia (Casos especiales)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                Generar Ticket
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Generando tu ticket...</p>
+        </div>
+    </div>
+
+    <!-- Modal para mostrar resultados -->
+    <div id="resultModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" id="modalHeader">
+                <div id="modalIcon"></div>
+                <h2 id="modalTitle"></h2>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Contenido dinámico -->
+            </div>
+            <button class="close-btn" onclick="closeModal()">Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Configuración de la API
+            const API_BASE_URL = 'http://localhost:8080/api';
+
+            // Manejar envío del formulario
+            $('#ticketForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                // Mostrar loading
+                showLoading(true);
+                
+                // Recopilar datos del formulario
+                const formData = {
+                    nationalId: $('#nationalId').val().trim(),
+                    nombreCliente: $('#nombreCliente').val().trim(),
+                    telefono: $('#telefono').val().trim() || null,
+                    queueType: $('#queueType').val(),
+                    branchOffice: 'Sucursal Principal'
+                };
+
+                // Validar datos básicos
+                if (!formData.nationalId || !formData.nombreCliente || !formData.queueType) {
+                    showLoading(false);
+                    showErrorModal('Error de Validación', 'Por favor completa todos los campos obligatorios.');
+                    return;
+                }
+
+                // Realizar petición AJAX
+                $.ajax({
+                    url: `${API_BASE_URL}/tickets`,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    timeout: 10000, // 10 segundos timeout
+                    success: function(response) {
+                        showLoading(false);
+                        showSuccessModal(response);
+                        resetForm();
+                    },
+                    error: function(xhr, status, error) {
+                        showLoading(false);
+                        handleError(xhr, status, error);
+                    }
+                });
+            });
+
+            function showLoading(show) {
+                if (show) {
+                    $('#submitBtn').prop('disabled', true).text('Generando...');
+                    $('#loading').show();
+                } else {
+                    $('#submitBtn').prop('disabled', false).text('Generar Ticket');
+                    $('#loading').hide();
+                }
+            }
+
+            function showSuccessModal(ticketData) {
+                const modalHeader = $('#modalHeader');
+                const modalIcon = $('#modalIcon');
+                const modalTitle = $('#modalTitle');
+                const modalBody = $('#modalBody');
+
+                // Configurar header de éxito
+                modalHeader.removeClass('error').addClass('success');
+                modalIcon.html('<div class="success-icon">✅</div>');
+                modalTitle.text('¡Ticket Generado Exitosamente!');
+
+                // Crear contenido del ticket
+                const ticketInfo = `
+                    <div class="ticket-info">
+                        <h3>📋 Información de tu Ticket</h3>
+                        <div class="info-row">
+                            <span class="info-label">Número de Ticket:</span>
+                            <span class="info-value"><strong>${ticketData.numero || 'N/A'}</strong></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Código de Referencia:</span>
+                            <span class="info-value">${ticketData.codigoReferencia || ticketData.identificador || 'N/A'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Cliente:</span>
+                            <span class="info-value">${ticketData.nombreCliente || $('#nombreCliente').val()}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Tipo de Cola:</span>
+                            <span class="info-value">${getQueueTypeDisplay(ticketData.queueType)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Estado:</span>
+                            <span class="info-value">${getStatusDisplay(ticketData.status)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Posición en Cola:</span>
+                            <span class="info-value">#${ticketData.positionInQueue || 'N/A'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Tiempo Estimado:</span>
+                            <span class="info-value">${ticketData.estimatedWaitMinutes || 'N/A'} minutos</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Creado:</span>
+                            <span class="info-value">${formatDateTime(ticketData.createdAt)}</span>
+                        </div>
+                    </div>
+                `;
+
+                const notificationInfo = ticketData.telefono || $('#telefono').val().trim() ? 
+                    '<p style="color: #28a745; text-align: center; margin-top: 15px;">📱 Recibirás notificaciones por Telegram cuando sea tu turno</p>' :
+                    '<p style="color: #ffc107; text-align: center; margin-top: 15px;">⚠️ Sin teléfono registrado - No recibirás notificaciones</p>';
+
+                modalBody.html(ticketInfo + notificationInfo);
+                $('#resultModal').show();
+            }
+
+            function showErrorModal(title, message, errorDetails = null) {
+                const modalHeader = $('#modalHeader');
+                const modalIcon = $('#modalIcon');
+                const modalTitle = $('#modalTitle');
+                const modalBody = $('#modalBody');
+
+                // Configurar header de error
+                modalHeader.removeClass('success').addClass('error');
+                modalIcon.html('<div class="error-icon">❌</div>');
+                modalTitle.text(title);
+
+                let errorContent = `<div class="error-message">${message}</div>`;
+                
+                if (errorDetails) {
+                    errorContent += `<div style="margin-top: 15px;">
+                        <h4>Detalles del Error:</h4>
+                        <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 12px; overflow-x: auto;">${JSON.stringify(errorDetails, null, 2)}</pre>
+                    </div>`;
+                }
+
+                modalBody.html(errorContent);
+                $('#resultModal').show();
+            }
+
+            function handleError(xhr, status, error) {
+                let title = 'Error al Generar Ticket';
+                let message = 'Ocurrió un error inesperado. Por favor intenta nuevamente.';
+                let errorDetails = null;
+
+                if (xhr.status === 0) {
+                    title = 'Error de Conexión';
+                    message = 'No se pudo conectar con el servidor. Verifica que la aplicación esté ejecutándose en http://localhost:8080';
+                } else if (xhr.status === 409) {
+                    title = 'Ticket Activo Existente';
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        message = response.mensaje || 'Ya tienes un ticket activo. Completa la atención antes de crear uno nuevo.';
+                        if (response.ticketActivo) {
+                            message += `\n\nTicket activo: ${response.ticketActivo.numero}`;
+                            message += `\nPosición: #${response.ticketActivo.positionInQueue}`;
+                            message += `\nTiempo estimado: ${response.ticketActivo.estimatedWaitMinutes} minutos`;
+                        }
+                    } catch (e) {
+                        message = 'Ya tienes un ticket activo. Completa la atención antes de crear uno nuevo.';
+                    }
+                } else if (xhr.status === 400) {
+                    title = 'Datos Inválidos';
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.campos) {
+                            message = 'Por favor corrige los siguientes errores:\n';
+                            Object.keys(response.campos).forEach(campo => {
+                                message += `• ${response.campos[campo]}\n`;
+                            });
+                        } else {
+                            message = response.mensaje || 'Los datos proporcionados no son válidos.';
+                        }
+                    } catch (e) {
+                        message = 'Los datos proporcionados no son válidos.';
+                    }
+                } else if (xhr.status === 500) {
+                    title = 'Error del Servidor';
+                    message = 'Error interno del servidor. Por favor contacta al administrador.';
+                } else if (status === 'timeout') {
+                    title = 'Tiempo de Espera Agotado';
+                    message = 'La solicitud tardó demasiado tiempo. Por favor intenta nuevamente.';
+                }
+
+                // Incluir detalles técnicos para debugging
+                errorDetails = {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    error: error,
+                    responseText: xhr.responseText
+                };
+
+                showErrorModal(title, message, errorDetails);
+            }
+
+            function getQueueTypeDisplay(queueType) {
+                const types = {
+                    'CAJA': 'Caja',
+                    'PERSONAL_BANKER': 'Personal Banker',
+                    'EMPRESAS': 'Empresas',
+                    'GERENCIA': 'Gerencia'
+                };
+                return types[queueType] || queueType;
+            }
+
+            function getStatusDisplay(status) {
+                const statuses = {
+                    'EN_ESPERA': 'En Espera',
+                    'PROXIMO': 'Próximo',
+                    'ATENDIENDO': 'Atendiendo',
+                    'COMPLETADO': 'Completado',
+                    'CANCELADO': 'Cancelado'
+                };
+                return statuses[status] || status;
+            }
+
+            function formatDateTime(dateTimeString) {
+                if (!dateTimeString) return 'N/A';
+                try {
+                    const date = new Date(dateTimeString);
+                    return date.toLocaleString('es-CL', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } catch (e) {
+                    return dateTimeString;
+                }
+            }
+
+            function resetForm() {
+                $('#ticketForm')[0].reset();
+            }
+
+            // Cerrar modal al hacer clic fuera de él
+            $(window).on('click', function(e) {
+                if (e.target.id === 'resultModal') {
+                    closeModal();
+                }
+            });
+        });
+
+        function closeModal() {
+            $('#resultModal').hide();
+        }
+    </script>
+</body>
+</html>
