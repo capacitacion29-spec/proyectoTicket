@@ -27,5 +27,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     @Query("SELECT t FROM Ticket t WHERE t.status = 'EN_ESPERA' ORDER BY t.createdAt ASC LIMIT 1")
     Optional<Ticket> findNextTicketToAssign();
     
+    @Query("SELECT t FROM Ticket t WHERE t.status = 'EN_ESPERA' AND t.positionInQueue <= 3 ORDER BY t.createdAt ASC")
+    List<Ticket> findProximosTickets();
+    
     Optional<Ticket> findByAssignedAdvisorAndStatus(com.example.ticketero.model.entity.Advisor advisor, TicketStatus status);
 }

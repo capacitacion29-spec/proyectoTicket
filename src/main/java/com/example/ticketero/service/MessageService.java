@@ -52,6 +52,21 @@ public class MessageService {
     }
     
     @Transactional
+    public void scheduleProximoTurnoMessage(Ticket ticket) {
+        log.info("Scheduling proximo turno message for: {}", ticket.getCodigoReferencia());
+        
+        Mensaje mensaje = Mensaje.builder()
+                .ticket(ticket)
+                .plantilla(MessageTemplate.TOTEM_PROXIMO_TURNO)
+                .estadoEnvio(MessageStatus.PENDIENTE)
+                .fechaProgramada(LocalDateTime.now().plusSeconds(3))
+                .intentos(0)
+                .build();
+        
+        mensajeRepository.save(mensaje);
+    }
+    
+    @Transactional
     public void processPendingMessages() {
         List<Mensaje> pendingMessages = mensajeRepository.findPendingMessagesToSend(LocalDateTime.now());
         

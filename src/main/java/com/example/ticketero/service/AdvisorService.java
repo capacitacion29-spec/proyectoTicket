@@ -88,10 +88,23 @@ public class AdvisorService {
         // Programar mensaje de notificación
         messageService.scheduleYourTurnMessage(ticket);
         
+        // Notificar a tickets próximos (posición <= 3)
+        notifyProximosTickets();
+        
         log.info("Ticket {} assigned to advisor {} at module {}", 
                 ticket.getCodigoReferencia(), advisor.getName(), advisor.getModuleNumber());
         
         return Optional.of(mapToResponse(advisor));
+    }
+    
+    private void notifyProximosTickets() {
+        List<Ticket> proximosTickets = ticketRepository.findProximosTickets();
+        
+        for (Ticket ticket : proximosTickets) {
+            if (ticket.getTelefono() != null && !ticket.getTelefono().isEmpty()) {
+                messageService.scheduleProximoTurnoMessage(ticket);
+            }
+        }
     }
     
     @Transactional
