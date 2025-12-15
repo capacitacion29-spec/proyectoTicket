@@ -31,7 +31,7 @@ public class TicketService {
             throw new RuntimeException("Ya existe un ticket activo para este National ID");
         }
         
-        QueueType queueType = QueueType.CAJA; // Por defecto CAJA
+        QueueType queueType = request.queueType();
         String numero = generateTicketNumber(queueType);
         
         Ticket ticket = Ticket.builder()

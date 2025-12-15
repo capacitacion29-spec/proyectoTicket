@@ -11,5 +11,7 @@ public record AdvisorResponse(
     String email,
     AdvisorStatus status,
     Integer moduleNumber,
-    Integer assignedTicketsCount
+    Integer assignedTicketsCount,
+    String currentTicket,
+    Long currentTicketId
 ) {}

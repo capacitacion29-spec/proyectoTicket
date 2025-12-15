@@ -1,6 +1,8 @@
 package com.example.ticketero.dto;
 
+import com.example.ticketero.model.enums.QueueType;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -16,5 +18,8 @@ public record CreateTicketRequest(
     String nombreCliente,
     
     @Size(max = 20, message = "Teléfono no puede exceder 20 caracteres")
-    String telefono
+    String telefono,
+    
+    @NotNull(message = "Tipo de atención es requerido")
+    QueueType queueType
 ) {}

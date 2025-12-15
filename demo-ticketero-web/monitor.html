@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Cola - Sistema Ticketero</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .status-bar {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: white;
+            text-align: center;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .panel h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        /* Cola de Tickets */
+        .queue-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .queue-item.next {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .queue-item.attending {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+
+        .ticket-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .ticket-info {
+            flex-grow: 1;
+            margin-left: 15px;
+        }
+
+        .client-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .queue-type {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .position {
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        /* Asesores */
+        .advisor-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+
+        .advisor-item.busy {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        .advisor-item.offline {
+            background: #e2e3e5;
+            border-left-color: #6c757d;
+        }
+
+        .advisor-info {
+            flex-grow: 1;
+        }
+
+        .advisor-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .module-number {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .current-ticket {
+            background: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .status-available {
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .status-offline {
+            background: #6c757d;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .complete-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .complete-btn:hover {
+            background: #218838;
+        }
+
+        .complete-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .refresh-btn:hover {
+            background: #5a6fd8;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖥️ Monitor de Cola</h1>
+            <p>Sistema Ticketero - Estado en Tiempo Real</p>
+        </div>
+
+        <div class="status-bar">
+            <span id="statusInfo">Cargando información del sistema...</span>
+        </div>
+
+        <div class="main-content">
+            <!-- Panel de Cola -->
+            <div class="panel">
+                <h2>📋 Cola de Tickets</h2>
+                <div id="queueContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando cola...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de Asesores -->
+            <div class="panel">
+                <h2>👥 Asesores</h2>
+                <div id="advisorsContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando asesores...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="refresh-btn" onclick="loadData()" title="Actualizar">🔄</button>
+
+    <script>
+        $(document).ready(function() {
+            const API_BASE_URL = 'http://localhost:8080/api';
+            
+            // Cargar datos iniciales
+            loadData();
+            
+            // Auto-refresh cada 5 segundos
+            setInterval(loadData, 5000);
+            
+            function loadData() {
+                loadQueue();
+                loadAdvisors();
+                loadStatus();
+            }
+            
+            function loadQueue() {
+                $.ajax({
+                    url: `${API_BASE_URL}/queue/status`,
+                    method: 'GET',
+                    success: function(data) {
+                        displayQueue(data);
+                    },
+                    error: function() {
+                        $('#queueContainer').html('<div class="error">Error al cargar la cola</div>');
+                    }
+                });
+            }
+            
+            function loadAdvisors() {
+                $.ajax({
+                    url: `${API_BASE_URL}/advisors`,
+                    method: 'GET',
+                    success: function(data) {
+                        displayAdvisors(data);
+                    },
+                    error: function() {
+                        $('#advisorsContainer').html('<div class="error">Error al cargar asesores</div>');
+                    }
+                });
+            }
+            
+            function loadStatus() {
+                $.ajax({
+                    url: `${API_BASE_URL}/queue/status`,
+                    method: 'GET',
+                    success: function(data) {
+                        const statusText = `📊 Total en cola: ${data.totalTicketsInQueue} | 👥 Disponibles: ${data.availableAdvisors} | 🔴 Ocupados: ${data.busyAdvisors} | ⏱️ Tiempo promedio: ${data.averageWaitTimeMinutes} min`;
+                        $('#statusInfo').text(statusText);
+                    },
+                    error: function() {
+                        $('#statusInfo').text('❌ Error al cargar estado del sistema');
+                    }
+                });
+            }
+            
+            function displayQueue(queueData) {
+                const container = $('#queueContainer');
+                
+                if (!queueData.nextTickets || queueData.nextTickets.length === 0) {
+                    container.html('<div style="text-align: center; padding: 40px; color: #666;">📭 No hay tickets en cola</div>');
+                    return;
+                }
+                
+                let html = '';
+                queueData.nextTickets.forEach(ticket => {
+                    const statusClass = ticket.status === 'PROXIMO' ? 'next' : 
+                                      ticket.status === 'ATENDIENDO' ? 'attending' : '';
+                    
+                    html += `
+                        <div class="queue-item ${statusClass}">
+                            <div class="ticket-number">${ticket.numero}</div>
+                            <div class="ticket-info">
+                                <div class="client-name">${ticket.nombreCliente}</div>
+                                <div class="queue-type">${getQueueTypeDisplay(ticket.queueType)}</div>
+                            </div>
+                            <div class="position">#${ticket.positionInQueue}</div>
+                        </div>
+                    `;
+                });
+                
+                container.html(html);
+            }
+            
+            function displayAdvisors(advisors) {
+                const container = $('#advisorsContainer');
+                
+                if (!advisors || advisors.length === 0) {
+                    container.html('<div style="text-align: center; padding: 40px; color: #666;">👤 No hay asesores registrados</div>');
+                    return;
+                }
+                
+                let html = '';
+                advisors.forEach(advisor => {
+                    const statusClass = advisor.status === 'BUSY' ? 'busy' : 
+                                      advisor.status === 'OFFLINE' ? 'offline' : '';
+                    
+                    let statusElement = '';
+                    if (advisor.status === 'BUSY' && advisor.currentTicket) {
+                        statusElement = `
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="current-ticket">Atendiendo: ${advisor.currentTicket}</div>
+                                <button class="complete-btn" onclick="completeTicket(${advisor.currentTicketId})" title="Finalizar atención">✅</button>
+                            </div>
+                        `;
+                    } else if (advisor.status === 'AVAILABLE') {
+                        statusElement = `<div class="status-available">Disponible</div>`;
+                    } else {
+                        statusElement = `<div class="status-offline">Fuera de línea</div>`;
+                    }
+                    
+                    html += `
+                        <div class="advisor-item ${statusClass}">
+                            <div class="advisor-info">
+                                <div class="advisor-name">${advisor.name}</div>
+                                <div class="module-number">Módulo ${advisor.moduleNumber}</div>
+                            </div>
+                            ${statusElement}
+                        </div>
+                    `;
+                });
+                
+                container.html(html);
+            }
+            
+            function getQueueTypeDisplay(queueType) {
+                const types = {
+                    'CAJA': 'Caja',
+                    'PERSONAL_BANKER': 'Personal Banker',
+                    'EMPRESAS': 'Empresas',
+                    'GERENCIA': 'Gerencia'
+                };
+                return types[queueType] || queueType;
+            }
+            
+            window.completeTicket = function(ticketId) {
+                if (!ticketId) {
+                    alert('Error: ID de ticket no válido');
+                    return;
+                }
+                
+                if (!confirm('¿Confirmar finalización de la atención?')) {
+                    return;
+                }
+                
+                // Deshabilitar botón temporalmente
+                $(`button[onclick="completeTicket(${ticketId})"]`).prop('disabled', true).text('⏳');
+                
+                $.ajax({
+                    url: `${API_BASE_URL}/advisors/complete/${ticketId}`,
+                    method: 'POST',
+                    success: function() {
+                        // Recargar datos inmediatamente
+                        loadData();
+                        
+                        // Mostrar notificación de éxito
+                        showNotification('✅ Atención finalizada correctamente', 'success');
+                    },
+                    error: function(xhr) {
+                        // Rehabilitar botón
+                        $(`button[onclick="completeTicket(${ticketId})"]`).prop('disabled', false).text('✅');
+                        
+                        let errorMsg = 'Error al finalizar la atención';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        
+                        showNotification('❌ ' + errorMsg, 'error');
+                    }
+                });
+            };
+            
+            function showNotification(message, type) {
+                const notification = $(`
+                    <div class="notification ${type}" style="
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        padding: 15px 20px;
+                        border-radius: 8px;
+                        color: white;
+                        font-weight: bold;
+                        z-index: 1000;
+                        animation: slideIn 0.3s ease;
+                        background: ${type === 'success' ? '#28a745' : '#dc3545'};
+                    ">${message}</div>
+                `);
+                
+                $('body').append(notification);
+                
+                setTimeout(() => {
+                    notification.fadeOut(300, () => notification.remove());
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>

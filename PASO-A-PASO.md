@@ -44,7 +44,7 @@ URL: file:///[ruta-proyecto]/demo-ticketero-web/index.html
 - **RUT/ID Nacional**: Identificación del cliente (requerido)
 - **Nombre Completo**: Nombre del cliente (requerido)
 - **Teléfono**: Para notificaciones Telegram (opcional)
-- **Tipo de Atención**: CAJA, PERSONAL_BANKER, EMPRESAS, GERENCIA (requerido)
+- **Tipo de Atención**: CAJA, PERSONAL_BANKER, EMPRESAS, GERENCIA (requerido) ⭐ **NUEVO**
 
 ---
 
@@ -68,7 +68,7 @@ curl -X POST "http://localhost:8080/api/telegram/test?message=Hola desde el sist
 
 ### **1. Tickets**
 
-#### Crear Ticket
+#### Crear Ticket ⭐ **ACTUALIZADO**
 ```bash
 curl -X POST http://localhost:8080/api/tickets \
   -H "Content-Type: application/json" \
@@ -78,6 +78,10 @@ curl -X POST http://localhost:8080/api/tickets \
     "telefono": "+56912345678",
     "queueType": "CAJA"
   }'
+```
+
+> **🔄 CAMBIO IMPORTANTE:** El campo `queueType` ahora es **OBLIGATORIO**. 
+> Valores válidos: `CAJA`, `PERSONAL_BANKER`, `EMPRESAS`, `GERENCIA`
 ```
 
 **Respuesta esperada:**
@@ -264,7 +268,7 @@ curl -X GET http://localhost:8080/actuator/info
 # - RUT/ID: 12345678-9
 # - Nombre: Ana Rodríguez
 # - Teléfono: +56912345678 (opcional)
-# - Tipo: CAJA
+# - Tipo de Atención: CAJA (OBLIGATORIO) ⭐
 
 # PASO 3: Hacer clic en "Generar Ticket"
 # - Si es exitoso: Pop-up con detalles del ticket
@@ -378,10 +382,16 @@ curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/jso
 # Respuesta esperada: HTTP 409 Conflict
 ```
 
-### **Caso 2: Validación de datos**
+### **Caso 2: Validación de datos** ⭐ **ACTUALIZADO**
 ```bash
 # Datos inválidos (sin RUT)
 curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nombreCliente": "Ana Rodríguez", "queueType": "CAJA"}'
+
+# Datos inválidos (sin queueType - NUEVO REQUERIMIENTO)
+curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "12345678-9", "nombreCliente": "Ana Rodríguez"}'
+
+# Datos inválidos (queueType inválido)
+curl -X POST http://localhost:8080/api/tickets -H "Content-Type: application/json" -d '{"nationalId": "12345678-9", "nombreCliente": "Ana Rodríguez", "queueType": "INVALIDO"}'
 
 # Respuesta esperada: HTTP 400 Bad Request
 ```

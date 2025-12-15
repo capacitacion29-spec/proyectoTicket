@@ -129,13 +129,27 @@ public class AdvisorService {
     }
     
     private AdvisorResponse mapToResponse(Advisor advisor) {
+        String currentTicket = null;
+        Long currentTicketId = null;
+        
+        if (advisor.getStatus() == AdvisorStatus.BUSY) {
+            Optional<Ticket> assignedTicket = ticketRepository.findByAssignedAdvisorAndStatus(
+                advisor, TicketStatus.ATENDIENDO);
+            if (assignedTicket.isPresent()) {
+                currentTicket = assignedTicket.get().getNumero();
+                currentTicketId = assignedTicket.get().getId();
+            }
+        }
+        
         return new AdvisorResponse(
                 advisor.getId(),
                 advisor.getName(),
                 advisor.getEmail(),
                 advisor.getStatus(),
                 advisor.getModuleNumber(),
-                advisor.getAssignedTicketsCount()
+                advisor.getAssignedTicketsCount(),
+                currentTicket,
+                currentTicketId
         );
     }
 }
