@@ -67,6 +67,21 @@ public class MessageService {
     }
     
     @Transactional
+    public void scheduleTiempoActualizadoMessage(Ticket ticket) {
+        log.info("Scheduling tiempo actualizado message for: {}", ticket.getCodigoReferencia());
+        
+        Mensaje mensaje = Mensaje.builder()
+                .ticket(ticket)
+                .plantilla(MessageTemplate.TOTEM_TIEMPO_ACTUALIZADO)
+                .estadoEnvio(MessageStatus.PENDIENTE)
+                .fechaProgramada(LocalDateTime.now().plusSeconds(2))
+                .intentos(0)
+                .build();
+        
+        mensajeRepository.save(mensaje);
+    }
+    
+    @Transactional
     public void processPendingMessages() {
         List<Mensaje> pendingMessages = mensajeRepository.findPendingMessagesToSend(LocalDateTime.now());
         
@@ -143,6 +158,19 @@ public class MessageService {
                     ticket.getNumero(),
                     ticket.getNombreCliente(),
                     ticket.getPositionInQueue()
+            );
+            
+            case TOTEM_TIEMPO_ACTUALIZADO -> String.format(
+                    "🔄 *Tiempo actualizado*\n\n" +
+                    "Ticket: *%s*\n" +
+                    "Cliente: %s\n" +
+                    "Nueva posición: %d\n" +
+                    "Tiempo estimado: %d minutos\n\n" +
+                    "Gracias por su paciencia.",
+                    ticket.getNumero(),
+                    ticket.getNombreCliente(),
+                    ticket.getPositionInQueue(),
+                    ticket.getEstimatedWaitMinutes()
             );
         };
     }

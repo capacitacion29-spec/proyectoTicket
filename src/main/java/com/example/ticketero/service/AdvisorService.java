@@ -107,6 +107,33 @@ public class AdvisorService {
         }
     }
     
+    private void updateQueuePositionsAndNotify() {
+        List<Ticket> waitingTickets = ticketRepository.findByStatusInOrderByCreatedAtAsc(
+            List.of(TicketStatus.EN_ESPERA));
+        
+        int position = 1;
+        for (Ticket ticket : waitingTickets) {
+            int oldPosition = ticket.getPositionInQueue();
+            ticket.setPositionInQueue(position);
+            
+            // Recalcular tiempo estimado
+            int newEstimatedTime = position * ticket.getQueueType().getAvgTimeMinutes();
+            ticket.setEstimatedWaitMinutes(newEstimatedTime);
+            
+            ticketRepository.save(ticket);
+            
+            // Notificar si la posición mejoró significativamente (>= 2 posiciones)
+            if (ticket.getTelefono() != null && !ticket.getTelefono().isEmpty() && 
+                oldPosition - position >= 2) {
+                messageService.scheduleTiempoActualizadoMessage(ticket);
+            }
+            
+            position++;
+        }
+        
+        log.info("Updated positions for {} waiting tickets", waitingTickets.size());
+    }
+    
     @Transactional
     public void completeTicketAttention(Long ticketId) {
         log.info("Completing attention for ticket ID: {}", ticketId);
@@ -129,6 +156,9 @@ public class AdvisorService {
         
         ticketRepository.save(ticket);
         advisorRepository.save(advisor);
+        
+        // Actualizar posiciones y notificar tickets en espera
+        updateQueuePositionsAndNotify();
         
         log.info("Ticket {} completed by advisor {}", ticket.getCodigoReferencia(), advisor.getName());
     }
